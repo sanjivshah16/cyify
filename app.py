@@ -1,7 +1,8 @@
 import streamlit as st
 from openai import OpenAI
+import os
 
-# Initialize session state to persist data between reruns
+# Initialize session state
 if 'transformed_text' not in st.session_state:
     st.session_state.transformed_text = ""
 if 'input_text' not in st.session_state:
@@ -11,11 +12,28 @@ if 'input_text' not in st.session_state:
 st.set_page_config(page_title="CYify Text Transformer", layout="wide")
 st.title("CYify Text Transformer")
 
-# Sidebar for API key
-with st.sidebar:
-    st.header("Settings")
-    api_key = st.text_input("Enter your OpenAI API key", type="password")
-    st.caption("Your API key is needed to use the OpenAI service")
+# Secure API key handling - check multiple sources
+api_key = None
+
+# 1. Check environment variables (for non-Streamlit hosting)
+if os.environ.get('OPENAI_API_KEY'):
+    api_key = os.environ.get('OPENAI_API_KEY')
+    st.sidebar.success("Using API key from environment variables")
+
+# 2. Check Streamlit secrets (for Streamlit Cloud)
+elif 'OPENAI_API_KEY' in st.secrets:
+    api_key = st.secrets['OPENAI_API_KEY']
+    st.sidebar.success("Using API key from secrets")
+
+# 3. If no API key found, ask the user
+else:
+    with st.sidebar:
+        st.header("Settings")
+        api_key = st.text_input("Enter your OpenAI API key", type="password")
+        st.caption("Your API key is needed to use the OpenAI service")
+        st.info("Get your API key from https://platform.openai.com/api-keys")
+
+# Rest of your app remains the same...
 
 # Main content
 st.write("Transform your text into flowery, emotionally expressive writing with dramatic single-word lines.")
