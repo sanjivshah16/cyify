@@ -1,6 +1,7 @@
 import streamlit as st
 from openai import OpenAI
 import os
+import hashlib
 
 # Initialize session state
 if 'transformed_text' not in st.session_state:
@@ -11,6 +12,23 @@ if 'input_text' not in st.session_state:
 # Page configuration
 st.set_page_config(page_title="CYify Text Transformer", layout="wide")
 st.title("CYify Text Transformer")
+
+# --- Password protection ---
+def verify_password(pw: str) -> bool:
+    return hashlib.sha256(pw.encode()).hexdigest() == st.secrets.get("password_hash", "")
+
+if "authenticated" not in st.session_state:
+    st.session_state.authenticated = False
+
+if not st.session_state.authenticated:
+    pw = st.text_input("Enter password", type="password")
+    if pw and verify_password(pw):
+        st.session_state.authenticated = True
+        st.rerun()
+    elif pw:
+        st.error("Incorrect password.")
+    st.stop()
+
 
 # Secure API key handling - check multiple sources
 api_key = None
